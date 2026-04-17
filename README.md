@@ -20,29 +20,43 @@ Una página web en HTML, CSS y JavaScript para medir la velocidad de internet en
 
 El proyecto muestra la velocidad actual de conexión de forma visual y limpia, ideal para páginas de prueba, dashboards simples o proyectos personales.
 
+## 🌐 Página web en vivo
+
+Puedes ver tu proyecto funcionando aquí:
+
+[https://ikecxyy.github.io/SpeedWifi/](https://ikecxyy.github.io/SpeedWifi/)
+
 ## 📁 Archivos
 
 - `index.html` → archivo principal de la página
 - `pause.png` → icono del botón de pausar
 - `play.png` → icono del botón de reiniciar
 
-> Si no usas imágenes PNG, el proyecto también puede funcionar con iconos de texto.
+> Si no usas imágenes PNG, el proyecto también funciona con iconos de texto.
 
-## 🚀 Cómo usarlo
+## 🚀 Cómo usarlo localmente
 
 1. Descarga o clona el repositorio.
 2. Abre `index.html` en tu navegador.
-3. La prueba empezará sola.
+3. La prueba empezará automáticamente.
 4. Usa el botón de pausa para detenerla y el botón de reinicio para volver a comenzar.
 
-## 🌐 Publicarlo en GitHub Pages
+## ⚠️ Nota importante
 
-1. Sube todos los archivos al repositorio.
-2. Entra a **Settings**.
-3. Ve a **Pages**.
-4. En **Branch**, selecciona `main` y `/root`.
-5. Guarda los cambios.
-6. Tu página quedará publicada en una URL como esta:
+La velocidad mostrada es una **estimación**, no una lectura exacta del router o del plan de internet. El resultado puede variar según:
 
-```txt
-https://tuusuario.github.io/tu-repositorio/
+- el servidor usado para la prueba
+- la distancia
+- la estabilidad del WiFi
+- la saturación de red
+- el navegador
+
+## 🛠 Tecnologías usadas
+
+- HTML
+- CSS
+- JavaScript
+
+## 👤 Autor
+
+Creado por iKecxyy para practicar y ofrecer una interfaz simple y bonita de prueba de internet.
