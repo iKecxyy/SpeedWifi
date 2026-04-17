@@ -132,18 +132,37 @@ function animate(){
 }
 animate();
 
-// measure - estrategia como speedtest.net (40+ descargas paralelas)
+// measure - estrategia como speedtest.net con varios servidores de respaldo
 async function measure(){
+  const urls = [
+    'https://download.thinkbroadband.com/20MB.zip',
+    'https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg',
+    'https://speed.hetzner.de/100MB.bin'
+  ];
+
+  for(const baseUrl of urls){
+    setStatus('Midiendo con ' + new URL(baseUrl).host + '...');
+    const speed = await measureUrl(baseUrl);
+    if(speed > 0){
+      return speed;
+    }
+    setStatus('Servidor de prueba no disponible, intentando otro...');
+  }
+
+  setStatus('No se pudo medir la velocidad. Comprueba tu conexión.');
+  return 0;
+}
+
+async function measureUrl(url){
   try {
     const t0 = performance.now();
-    const maxTime = 10000;
-    const parallelCount = 4;
+    const maxTime = 8000;
+    const parallelCount = 3;
     const fetchOptions = { mode: 'cors', cache: 'no-store' };
-    const url = 'https://download.thinkbroadband.com/20MB.zip';
     let totalBytes = 0;
     let round = 0;
 
-    while(performance.now() - t0 < maxTime && round < 20){
+    while(performance.now() - t0 < maxTime && round < 10){
       const promises = [];
       for(let i = 0; i < parallelCount; i++){
         promises.push(
@@ -166,20 +185,15 @@ async function measure(){
     }
 
     const t1 = performance.now();
-    
     if(totalBytes === 0){
-      console.warn('No se descargó ningún byte en la prueba de velocidad.');
-      setStatus('No se pudo medir la velocidad. Comprueba tu conexión.');
       return 0;
     }
 
     const bits = totalBytes * 8;
     const seconds = (t1 - t0)/1000;
-
     return bits / seconds;
   } catch (e) {
-    console.error('Error en measure():', e);
-    setStatus('Error en la prueba de red. Reintenta más tarde.');
+    console.error('Error en measureUrl():', e);
     return 0;
   }
 }
