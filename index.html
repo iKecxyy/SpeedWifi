@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -67,6 +66,13 @@ body{
 .avg{ color: #FF9800; } /* orange */
 .min{ color: #F44336; } /* red */
 
+.status{
+  margin-top:10px;
+  font-size:14px;
+  color:#999;
+  opacity:0.8;
+}
+
 #restart{ display:none; }
 </style>
 </head>
@@ -77,6 +83,7 @@ body{
   <div>
     <div class="value" id="val">0</div>
     <div class="unit" id="unit">bps</div>
+    <div class="status" id="status">Iniciando prueba...</div>
     <div id="details" class="details">
       <div class="detail max">Velocidad máxima: <span id="maxSpeed"></span></div>
       <div class="detail avg">Velocidad promedio: <span id="avgSpeed"></span></div>
@@ -98,6 +105,10 @@ let results = [];
 let maxSpeed = 0;
 
 let animateRunning = true; // 👈 control clave
+
+function setStatus(text){
+  document.getElementById("status").innerText = text;
+}
 
 function format(bps){
   if(bps < 1000) return [bps.toFixed(0), "bps"];
@@ -121,24 +132,54 @@ function animate(){
 }
 animate();
 
-// measure
+// measure - estrategia como speedtest.net (40+ descargas paralelas)
 async function measure(){
   try {
     const t0 = performance.now();
+    const maxTime = 10000;
+    const parallelCount = 4;
+    const fetchOptions = { mode: 'cors', cache: 'no-store' };
+    const url = 'https://download.thinkbroadband.com/20MB.zip';
+    let totalBytes = 0;
+    let round = 0;
 
-    const res = await fetch(
-      "https://upload.wikimedia.org/wikipedia/commons/3/3f/Fronalpstock_big.jpg?"+Date.now()
-    );
+    while(performance.now() - t0 < maxTime && round < 20){
+      const promises = [];
+      for(let i = 0; i < parallelCount; i++){
+        promises.push(
+          fetch(`${url}?cache=${Date.now()}_${i}`, fetchOptions)
+            .then(res => {
+              if(!res.ok) throw new Error('Failed ' + res.status);
+              return res.blob();
+            })
+            .then(blob => {
+              totalBytes += blob.size;
+            })
+            .catch(err => {
+              console.warn('Descarga fallida:', err);
+            })
+        );
+      }
 
-    const blob = await res.blob();
+      await Promise.all(promises);
+      round++;
+    }
 
     const t1 = performance.now();
+    
+    if(totalBytes === 0){
+      console.warn('No se descargó ningún byte en la prueba de velocidad.');
+      setStatus('No se pudo medir la velocidad. Comprueba tu conexión.');
+      return 0;
+    }
 
-    const bits = blob.size * 8;
+    const bits = totalBytes * 8;
     const seconds = (t1 - t0)/1000;
 
     return bits / seconds;
   } catch (e) {
+    console.error('Error en measure():', e);
+    setStatus('Error en la prueba de red. Reintenta más tarde.');
     return 0;
   }
 }
@@ -149,12 +190,18 @@ async function loop(){
 
     let speed = await measure();
 
+    if(document.getElementById("stop").style.display === "none"){
+      document.getElementById("stop").style.display = "flex";
+    }
+
     results.push(speed);
-    target = speed;
 
     if(speed > maxSpeed){
       maxSpeed = speed;
     }
+
+    // mantiene el valor más alto visible mientras sigue buscando
+    target = Math.max(maxSpeed, speed);
 
     await new Promise(r => setTimeout(r, 400));
   }
@@ -172,13 +219,15 @@ function startTest(){
 
   animateRunning = true; // 👈 reactivar animación
 
+  setStatus('Midiendo velocidad...');
+
   document.getElementById("val").style.opacity = "0";
   document.getElementById("unit").style.opacity = "0";
 
   document.getElementById("details").style.display = "none";
   document.getElementById("details").style.opacity = "0";
 
-  document.getElementById("stop").style.display = "flex";
+  document.getElementById("stop").style.display = "none";
   document.getElementById("restart").style.display = "none";
 
   loop();
@@ -191,7 +240,7 @@ function startTest(){
 
   setTimeout(()=>{
     if(running) stopTest();
-  },15000);
+  },13000);
 }
 
 // stop (IMPORTANT FIX)
@@ -216,10 +265,16 @@ function stopTest(){
   document.getElementById("stop").style.display = "none";
   document.getElementById("restart").style.display = "flex";
 
+  if(results.length === 0 || maxSpeed === 0){
+    setStatus('No se detectó velocidad. Intenta abrir el archivo en un servidor local o revisa tu conexión.');
+  } else {
+    setStatus('Prueba finalizada.');
+  }
+
   // calculate details
-  let max = Math.max(...results);
-  let min = Math.min(...results);
-  let avg = results.reduce((a,b)=>a+b,0)/results.length;
+  let max = results.length ? Math.max(...results) : 0;
+  let min = results.length ? Math.min(...results) : 0;
+  let avg = results.length ? results.reduce((a,b)=>a+b,0)/results.length : 0;
 
   // format and set
   document.getElementById("maxSpeed").innerText = format(max)[0] + " " + format(max)[1];
@@ -234,8 +289,8 @@ function stopTest(){
   }, 100);
 }
 
-// auto start
-startTest();
+// auto start when page is ready
+window.addEventListener('DOMContentLoaded', startTest);
 </script>
 
 </body>
