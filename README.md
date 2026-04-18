@@ -20,4 +20,4 @@ Una página simple para medir la velocidad de internet en tiempo real.
 
 ## 👤 Autor
 
-iKecxyy
+Nobody
